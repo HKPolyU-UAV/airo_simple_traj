@@ -11,8 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   genmsg
   visualization_msgs
+  rospy
 
 )
+
+catkin_python_setup()
 
 
 add_message_files(
@@ -26,7 +29,7 @@ generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES offb
-  CATKIN_DEPENDS geometry_msgs mavros_msgs roscpp std_msgs message_generation
+  CATKIN_DEPENDS rospy geometry_msgs mavros_msgs roscpp std_msgs message_generation
 #  DEPENDS system_lib
 )
 
@@ -38,6 +41,8 @@ include_directories(
 
 catkin_install_python(PROGRAMS 
   scripts/aae.py
+  # scripts/mainserver.py
+  scripts/start.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
