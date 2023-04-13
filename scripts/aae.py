@@ -10,7 +10,5 @@ if __name__ == '__main__':
     rospy.loginfo("SCRIPT FOR AAE TRAJ!")
 
     ts = ms.mainserver()
-    
-    # point = Point(21, 42)
-        
+            
     rospy.spin()
