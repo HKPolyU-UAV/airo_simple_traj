@@ -105,9 +105,7 @@ class mainserver():
             wp_temp.pose.position.x = p_temp[0]
             wp_temp.pose.position.y = p_temp[1]
             wp_temp.pose.position.z = p_temp[2]
-            
-            # print(q_temp)
-            
+                        
             wp_temp.pose.orientation.w = q_temp[0]
             wp_temp.pose.orientation.x = q_temp[1]
             wp_temp.pose.orientation.y = q_temp[2]
@@ -116,23 +114,11 @@ class mainserver():
             self.wp.append(wp_temp)
             
         print(len(self.wp))
-        print(" ")
-        print(" ")
-        print(" ")
-        print(" ")
-        print(" ")
+
         self.starting_pt = self.wp[self.wp_indi]
                         
         self.target_pt = [0,0,0,0]
         
-        
-        
-        # for i in range(self.sizeof_wp):
-        #     self.wp[i][2] = self.wp[i][2] + 0.5
-        
-        # print(self.sizeof_wp)
-        # print(self.wp[0][3])
-        # print(math.pi)
 
         ############
         
@@ -227,9 +213,7 @@ class mainserver():
                 
             if(self.arrived_or_not() == True):
                 self.wp_indi = self.wp_indi + 1
-                print(self.wp_indi)
-                print(self.sizeof_wp)
-                print(self.wp_indi >= self.sizeof_wp)
+
                 if self.wp_indi >= self.sizeof_wp:                                        
                     self.fsm = "TERMINATE"                
                     self.last_request = rospy.Time.now()
@@ -295,7 +279,6 @@ class mainserver():
             self.set_point.pose.position.z = self.take_off_hoverpt[2]
         
         
-        
         desired = np.array([
             self.target_pt[0],
             self.target_pt[1],
@@ -309,7 +292,6 @@ class mainserver():
         ])
         
         delta = np.linalg.norm(current - desired)
-        # print(delta)
         
         if(delta < 0.14):
             return True
@@ -333,7 +315,6 @@ class mainserver():
     def se3_transform(self, p) -> list:
         
         t = [self.x_offset, self.y_offset, self.z_offset]
-        # print(t)
         q = tf.transformations.quaternion_from_euler(0.0, 0.0, self.yaw_offset)
         R = quaternion_matrix(q)[:3, :3]
         
@@ -341,9 +322,7 @@ class mainserver():
         T[:3, :3] = R
         T[:3, 3] = t
         p_transformed = tf.transformations.concatenate_matrices(T, [p[0], p[1], p[2], 1.0])
-        
-        # print([p_transformed[0], p_transformed[1], p_transformed[2]])
-        # print(" ")
+
         
         return [p_transformed[0], p_transformed[1], p_transformed[2]]
         
@@ -351,12 +330,9 @@ class mainserver():
     def rpy2q(self, yaw) -> list:
         
         roll_deg, pitch_deg, yaw_deg = 0.0, 0.0, yaw
-        # print(yaw_deg)
         rpy = np.array([roll_deg, pitch_deg, yaw_deg])
-        
         q = tf.transformations.quaternion_from_euler(rpy[0], rpy[1], rpy[2])
-        # print("q here")
-        # print(q)
+
         
         return [q[3], q[0], q[1], q[2]]
     
