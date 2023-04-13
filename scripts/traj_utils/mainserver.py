@@ -73,7 +73,7 @@ class mainserver():
         self.print_or_not = True
         
         ############
-        self.wp = np.array([
+        self.wp0 = np.array([
             [0.0, 0.0, 0.0, 2 * math.pi * 270 / 360],
             [0.5, 0.0, 2.0, 2 * math.pi * 270 / 360],
             [1.0, 0.0, 0.0, 2 * math.pi * 270 / 360],                    
@@ -89,18 +89,50 @@ class mainserver():
             [0.0, 0.0, 1.0, 2 * math.pi * 270 / 360]
         ])                
         
-        self.sizeof_wp = len(self.wp)
-        self.wp_indi = 0        
-        self.starting_pt = self.wp[self.wp_indi]
+        self.wp = []
         
+        self.sizeof_wp = len(self.wp0)
+        self.wp_indi = 0        
+        
+        for i in range(self.sizeof_wp):
+            wp_temp = PoseStamped()
+            p_temp = [self.wp0[i][0], self.wp0[i][1], self.wp0[i][2]]
+
+            q_temp = self.rpy2q(self.wp0[i][3] + self.yaw_offset)
+            
+            p_temp = self.se3_transform(p_temp)
+            
+            wp_temp.pose.position.x = p_temp[0]
+            wp_temp.pose.position.y = p_temp[1]
+            wp_temp.pose.position.z = p_temp[2]
+            
+            # print(q_temp)
+            
+            wp_temp.pose.orientation.w = q_temp[0]
+            wp_temp.pose.orientation.x = q_temp[1]
+            wp_temp.pose.orientation.y = q_temp[2]
+            wp_temp.pose.orientation.z = q_temp[3]                        
+            
+            self.wp.append(wp_temp)
+            
+        print(len(self.wp))
+        print(" ")
+        print(" ")
+        print(" ")
+        print(" ")
+        print(" ")
+        self.starting_pt = self.wp[self.wp_indi]
+                        
         self.target_pt = [0,0,0,0]
+        
+        
         
         # for i in range(self.sizeof_wp):
         #     self.wp[i][2] = self.wp[i][2] + 0.5
         
-        print(self.sizeof_wp)
-        print(self.wp[0][3])
-        print(math.pi)
+        # print(self.sizeof_wp)
+        # print(self.wp[0][3])
+        # print(math.pi)
 
         ############
         
@@ -153,7 +185,14 @@ class mainserver():
                 self.fsm = "GOSTART"
                 self.last_request = rospy.Time.now()
                 self.print_or_not = True
-                self.target_pt = self.starting_pt
+                wp_temp = PoseStamped()
+                wp_temp = self.wp[self.wp_indi]
+                
+                self.target_pt = [
+                    wp_temp.pose.position.x,
+                    wp_temp.pose.position.y,
+                    wp_temp.pose.position.z
+                ]
                             
         elif self.fsm == "GOSTART":
             
@@ -167,7 +206,15 @@ class mainserver():
                 self.last_request = rospy.Time.now()
                 self.print_or_not = True                
                 self.wp_indi = self.wp_indi + 1
-                self.target_pt = self.wp[self.wp_indi]
+                
+                wp_temp = PoseStamped()
+                wp_temp = self.wp[self.wp_indi]
+                
+                self.target_pt = [
+                    wp_temp.pose.position.x,
+                    wp_temp.pose.position.y,
+                    wp_temp.pose.position.z
+                ]
                 
         
         elif self.fsm == "EXECUTE":
@@ -189,8 +236,16 @@ class mainserver():
                     self.print_or_not = True
                 else:
                     self.last_request = rospy.Time.now()
-                    self.print_or_not = True                    
-                    self.target_pt = self.wp[self.wp_indi]
+                    self.print_or_not = True           
+                             
+                    wp_temp = PoseStamped()
+                    wp_temp = self.wp[self.wp_indi]
+                    
+                    self.target_pt = [
+                        wp_temp.pose.position.x,
+                        wp_temp.pose.position.y,
+                        wp_temp.pose.position.z
+                    ]
         
         elif self.fsm == "TERMINATE":
             
@@ -231,8 +286,15 @@ class mainserver():
         
                 
     def arrived_or_not(self) -> bool:
+                
+        if(not self.fsm == "ARMED"):
+            self.set_point = self.wp[self.wp_indi]            
+        else :
+            self.set_point.pose.position.x = self.take_off_hoverpt[0]
+            self.set_point.pose.position.y = self.take_off_hoverpt[1]
+            self.set_point.pose.position.z = self.take_off_hoverpt[2]
         
-        self.np2posestamped(self.target_pt)
+        
         
         desired = np.array([
             self.target_pt[0],
@@ -253,42 +315,14 @@ class mainserver():
             return True
         else: 
             return False
-    
-    def np2posestamped(self, pose_np : list) -> None:  
-        
-        p_temp = [pose_np[0], pose_np[1], pose_np[2]]
-        q_temp = self.rpy2q(pose_np[3])
-                
-        
-        
-        pos_temp = [0,0,0]
-        if(not self.fsm == "ARMED"):
-            p_temp = self.se3_transform(p_temp)
-            q_temp = so3_transform(q_temp)
-            
-            self.set_point.pose.position.x = p_temp[0]
-            self.set_point.pose.position.y = p_temp[1]
-            self.set_point.pose.position.z = p_temp[2]
-            
-            self.set_point.pose.orientation.w = q_temp[0]
-            self.set_point.pose.orientation.x = q_temp[1]
-            self.set_point.pose.orientation.y = q_temp[2]
-            self.set_point.pose.orientation.z = q_temp[3]
-            
-        else:
-            # without apply SE(3) transformation
-            self.set_point.pose.position.x = p_temp[0]
-            self.set_point.pose.position.y = p_temp[1]
-            self.set_point.pose.position.z = p_temp[2]
-            
-            self.set_point.pose.orientation.w = q_temp[0]
-            self.set_point.pose.orientation.x = q_temp[1]
-            self.set_point.pose.orientation.y = q_temp[2]
-            self.set_point.pose.orientation.z = q_temp[3]
+
             
     def so3_transform(self, q) -> list:
+        print(q)
         R = tf.transformations.rotation_matrix(self.yaw_offset, (0, 0, 1))
-        M = rf.transformations.quaternion_matrix(q)
+        print(R)
+        print("")
+        M = tf.transformations.quaternion_matrix(q)
         
         new_M = np.dot(R, M)
         
@@ -299,6 +333,7 @@ class mainserver():
     def se3_transform(self, p) -> list:
         
         t = [self.x_offset, self.y_offset, self.z_offset]
+        # print(t)
         q = tf.transformations.quaternion_from_euler(0.0, 0.0, self.yaw_offset)
         R = quaternion_matrix(q)[:3, :3]
         
@@ -306,16 +341,22 @@ class mainserver():
         T[:3, :3] = R
         T[:3, 3] = t
         p_transformed = tf.transformations.concatenate_matrices(T, [p[0], p[1], p[2], 1.0])
-                
+        
+        # print([p_transformed[0], p_transformed[1], p_transformed[2]])
+        # print(" ")
+        
         return [p_transformed[0], p_transformed[1], p_transformed[2]]
         
         
     def rpy2q(self, yaw) -> list:
         
         roll_deg, pitch_deg, yaw_deg = 0.0, 0.0, yaw
+        # print(yaw_deg)
         rpy = np.array([roll_deg, pitch_deg, yaw_deg])
         
         q = tf.transformations.quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+        # print("q here")
+        # print(q)
         
         return [q[3], q[0], q[1], q[2]]
     
@@ -326,12 +367,4 @@ class mainserver():
 
         return [rpy[0], rpy[1], rpy[2]]
                 
-        
-    
-    def set_straight():
-        return 
-    def set_traj(points):
-        return
-    
-    
     
