@@ -52,7 +52,18 @@ add_executable(offb
 )
 
 target_link_libraries(offb
-   ${catkin_LIBRARIES})
+   ${catkin_LIBRARIES}
+)
+
+add_executable(traj
+    src/traj.cpp
+)
+
+target_link_libraries(traj
+   ${catkin_LIBRARIES}
+)
+
+
 
 
 
