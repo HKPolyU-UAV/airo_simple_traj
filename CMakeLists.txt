@@ -17,15 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_python_setup()
 
-
-add_message_files(
- FILES
-
-)
-
-
-generate_messages(DEPENDENCIES std_msgs sensor_msgs)
-
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES offb
